@@ -20,7 +20,7 @@
 #使用
 
     dependencies {
-        implementation 'com.github.raoqingmou:MyRxBus:-SNAPSHOT'
+	    implementation 'com.github.raoqingmou:MyRxBus:1.0.1'
     }
 
 #使用注解
