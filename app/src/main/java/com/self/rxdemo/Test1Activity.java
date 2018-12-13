@@ -1,8 +1,8 @@
 package com.self.rxdemo;
 
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -12,8 +12,6 @@ import com.killr.rxbus.annotation.Subscribe;
 import com.killr.rxbus.annotation.Tag;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Test1Activity extends AppCompatActivity implements View.OnClickListener {
 
@@ -38,11 +36,6 @@ public class Test1Activity extends AppCompatActivity implements View.OnClickList
 
     }
 
-    @Subscribe(tags = {@Tag(value = "Produce")})
-    public void test1(String data) {
-        Toast.makeText(this, data, Toast.LENGTH_SHORT).show();
-    }
-
     @Subscribe(tags = {@Tag(value = "null_test")})
     public void test2() {
         Toast.makeText(this, "发个空的", Toast.LENGTH_SHORT).show();
@@ -54,15 +47,15 @@ public class Test1Activity extends AppCompatActivity implements View.OnClickList
     }
 
     @Subscribe()
-    public void test4(A datas) {
-        Toast.makeText(this, datas.getA(), Toast.LENGTH_SHORT).show();
+    public void test4(ArrayList datas) {
+        Toast.makeText(this, datas.size() + "xxx", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_click1:
-                startActivity(new Intent(this, Test1Activity.class));
+                startActivity(new Intent(this, Test2Activity.class));
                 break;
             case R.id.btn_click2:
 

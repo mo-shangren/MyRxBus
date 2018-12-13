@@ -6,7 +6,6 @@ import com.killr.rxbus.annotation.Tag;
 import com.killr.rxbus.entity.DeadEvent;
 import com.killr.rxbus.entity.Default;
 import com.killr.rxbus.entity.EventType;
-import com.killr.rxbus.entity.ProducerEvent;
 import com.killr.rxbus.entity.SubscriberEvent;
 import com.killr.rxbus.finder.Finder;
 import com.killr.rxbus.thread.ThreadEnforcer;
@@ -81,12 +80,6 @@ public class Bus {
      * All registered event subscribers, indexed by event type.
      */
     private final ConcurrentMap<EventType, Set<SubscriberEvent>> subscribersByType =
-            new ConcurrentHashMap<>();
-
-    /**
-     * All registered event producers, index by event type.
-     */
-    private final ConcurrentMap<EventType, ProducerEvent> producersByType =
             new ConcurrentHashMap<>();
 
     /**
@@ -178,25 +171,6 @@ public class Bus {
         }
         enforcer.enforce(this);
 
-        Map<EventType, ProducerEvent> foundProducers = finder.findAllProducers(object);
-        for (EventType type : foundProducers.keySet()) {
-
-            final ProducerEvent producer = foundProducers.get(type);
-            ProducerEvent previousProducer = producersByType.putIfAbsent(type, producer);
-            //checking if the previous producer existed
-            if (previousProducer != null) {
-                throw new IllegalArgumentException("Producer method for type " + type
-                        + " found on type " + producer.getTarget().getClass()
-                        + ", but already registered by type " + previousProducer.getTarget().getClass() + ".");
-            }
-            Set<SubscriberEvent> subscribers = subscribersByType.get(type);
-            if (subscribers != null && !subscribers.isEmpty()) {
-                for (SubscriberEvent subscriber : subscribers) {
-                    dispatchProducerResult(subscriber, producer);
-                }
-            }
-        }
-
         Map<EventType, Set<SubscriberEvent>> foundSubscribersMap = finder.findAllSubscribers(object);
         for (EventType type : foundSubscribersMap.keySet()) {
             Set<SubscriberEvent> subscribers = subscribersByType.get(type);
@@ -214,33 +188,8 @@ public class Bus {
             }
         }
 
-        for (Map.Entry<EventType, Set<SubscriberEvent>> entry : foundSubscribersMap.entrySet()) {
-            EventType type = entry.getKey();
-            ProducerEvent producer = producersByType.get(type);
-            if (producer != null && producer.isValid()) {
-                Set<SubscriberEvent> subscriberEvents = entry.getValue();
-                for (SubscriberEvent subscriberEvent : subscriberEvents) {
-                    if (!producer.isValid()) {
-                        break;
-                    }
-                    if (subscriberEvent.isValid()) {
-                        dispatchProducerResult(subscriberEvent, producer);
-                    }
-                }
-            }
-        }
     }
 
-    private void dispatchProducerResult(final SubscriberEvent subscriberEvent, ProducerEvent producer) {
-        producer.produce().subscribe(new Consumer() {
-            @Override
-            public void accept(Object event) throws Exception {
-                if (event != null) {
-                    dispatch(event, subscriberEvent);
-                }
-            }
-        });
-    }
 
     /**
      * Whether all the subscriber methods on {@code object} to receive events and producer methods to provide events has registered.
@@ -256,33 +205,22 @@ public class Bus {
             throw new NullPointerException("Object to register must not be null.");
         }
 
-        boolean hasProducerRegistered = false, hasSubscriberRegistered = false;
-        Map<EventType, ProducerEvent> foundProducers = finder.findAllProducers(object);
-        for (EventType type : foundProducers.keySet()) {
+        boolean hasSubscriberRegistered = false;
 
-            final ProducerEvent producer = foundProducers.get(type);
-            hasProducerRegistered = producersByType.containsValue(producer);
-            if (hasProducerRegistered) {
-                break;
-            }
-        }
-
-        if (!hasProducerRegistered) {
-            Map<EventType, Set<SubscriberEvent>> foundSubscribersMap = finder.findAllSubscribers(object);
-            for (EventType type : foundSubscribersMap.keySet()) {
-                Set<SubscriberEvent> subscribers = subscribersByType.get(type);
-                if (subscribers != null && subscribers.size() > 0) {
-                    final Set<SubscriberEvent> foundSubscribers = foundSubscribersMap.get(type);
-                    // check the first subscriber, Zzzzz...
-                    SubscriberEvent foundSubscriber = !foundSubscribers.isEmpty() ? foundSubscribers.iterator().next() : null;
-                    hasSubscriberRegistered = subscribers.contains(foundSubscriber);
-                    if (hasSubscriberRegistered) {
-                        break;
-                    }
+        Map<EventType, Set<SubscriberEvent>> foundSubscribersMap = finder.findAllSubscribers(object);
+        for (EventType type : foundSubscribersMap.keySet()) {
+            Set<SubscriberEvent> subscribers = subscribersByType.get(type);
+            if (subscribers != null && subscribers.size() > 0) {
+                final Set<SubscriberEvent> foundSubscribers = foundSubscribersMap.get(type);
+                // check the first subscriber, Zzzzz...
+                SubscriberEvent foundSubscriber = !foundSubscribers.isEmpty() ? foundSubscribers.iterator().next() : null;
+                hasSubscriberRegistered = subscribers.contains(foundSubscriber);
+                if (hasSubscriberRegistered) {
+                    break;
                 }
             }
         }
-        return hasProducerRegistered || hasSubscriberRegistered;
+        return hasSubscriberRegistered;
     }
 
     /**
@@ -298,17 +236,6 @@ public class Bus {
         }
         enforcer.enforce(this);
 
-        Map<EventType, ProducerEvent> producersInListener = finder.findAllProducers(object);
-        for (Map.Entry<EventType, ProducerEvent> entry : producersInListener.entrySet()) {
-            final EventType key = entry.getKey();
-            ProducerEvent producer = getProducerForEventType(key);
-            ProducerEvent value = entry.getValue();
-
-            if (value == null || !value.equals(producer)) {
-                continue;
-            }
-            producersByType.remove(key).invalidate();
-        }
 
         Map<EventType, Set<SubscriberEvent>> subscribersInListener = finder.findAllSubscribers(object);
         for (Map.Entry<EventType, Set<SubscriberEvent>> entry : subscribersInListener.entrySet()) {
@@ -391,16 +318,6 @@ public class Bus {
         }
     }
 
-    /**
-     * Retrieves the currently registered producer for {@code type}.  If no producer is currently registered for
-     * {@code type}, this method will return {@code null}.
-     *
-     * @param type type of producer to retrieve.
-     * @return currently registered producer, or {@code null}.
-     */
-    ProducerEvent getProducerForEventType(EventType type) {
-        return producersByType.get(type);
-    }
 
     /**
      * Retrieves a mutable set of the currently registered subscribers for {@code type}.  If no subscribers are currently

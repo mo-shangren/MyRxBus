@@ -1,6 +1,8 @@
 package com.killr.rxbus.entity;
 
 
+import android.annotation.SuppressLint;
+
 import com.killr.rxbus.thread.EventThread;
 
 import java.lang.reflect.InvocationTargetException;
@@ -70,18 +72,16 @@ public class SubscriberEvent extends Event {
         hashCode = (prime + method.hashCode()) * prime + target.hashCode();
     }
 
+    @SuppressLint("CheckResult")
     private void initObservable() {
         subject = PublishSubject.create().toSerialized();
-        subject.observeOn(EventThread.getScheduler(thread)).subscribe(new Consumer() {
-            @Override
-            public void accept(Object event) throws Exception {
-                try {
-                    if (valid) {
-                        handleEvent(event);
-                    }
-                } catch (InvocationTargetException e) {
-                    throwRuntimeException("Could not dispatch event: " + event.getClass() + " to subscriber " + SubscriberEvent.this, e);
+        subject.observeOn(EventThread.getScheduler(thread)).subscribe(event -> {
+            try {
+                if (valid) {
+                    handleEvent(event);
                 }
+            } catch (InvocationTargetException e) {
+                throwRuntimeException("Could not dispatch event: " + event.getClass() + " to subscriber " + SubscriberEvent.this, e);
             }
         });
     }

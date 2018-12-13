@@ -1,7 +1,9 @@
 package com.self.rxdemo;
 
 import android.annotation.SuppressLint;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.TextView;
@@ -18,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 public class Test2Activity extends AppCompatActivity implements View.OnClickListener {
 
     TextView btn1, btn2, btn3, btn4;
-    TestProduce mProduce = new TestProduce();
 
     @SuppressLint("CheckResult")
     @Override
@@ -45,18 +46,12 @@ public class Test2Activity extends AppCompatActivity implements View.OnClickList
 
     }
 
-    boolean send;
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_click1:
-                if (!send) {
-                    RxBus.get().register(mProduce);
-                    send = true;
-                } else {
-                    Toast.makeText(this, "已经发过了，再发就炸了", Toast.LENGTH_SHORT).show();
-                }
+
                 break;
             case R.id.btn_click2:
                 RxBus.get().postTag("null_test");
@@ -65,15 +60,13 @@ public class Test2Activity extends AppCompatActivity implements View.OnClickList
                 RxBus.get().post();
                 break;
             case R.id.btn_click4:
-                List<String> d = new ArrayList<>();
+                ArrayList<String> d = new ArrayList<>();
                 d.add("1");
                 d.add("1");
                 d.addAll(d);
                 d.addAll(d);
                 d.addAll(d);
-
-
-                RxBus.get().post(new AA("xxxx"));
+                RxBus.get().post(d);
                 break;
         }
     }

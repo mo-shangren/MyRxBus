@@ -1,12 +1,10 @@
 package com.killr.rxbus.finder;
 
 
-import com.killr.rxbus.annotation.Produce;
 import com.killr.rxbus.annotation.Subscribe;
 import com.killr.rxbus.annotation.Tag;
 import com.killr.rxbus.entity.Default;
 import com.killr.rxbus.entity.EventType;
-import com.killr.rxbus.entity.ProducerEvent;
 import com.killr.rxbus.entity.SubscriberEvent;
 import com.killr.rxbus.thread.EventThread;
 
@@ -20,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Helper methods for finding methods annotated with {@link Produce} and {@link Subscribe}.
+ * Helper methods for finding methods annotated with {@link Subscribe}.
  */
 public final class AnnotatedFinder {
 
@@ -49,7 +47,7 @@ public final class AnnotatedFinder {
     }
 
     /**
-     * Load all methods annotated with {@link Produce} or {@link Subscribe} into their respective caches for the
+     * Load all methods annotated with  {@link Subscribe} into their respective caches for the
      * specified class.
      */
     private static void loadAnnotatedMethods(Class<?> listenerClass,
@@ -102,74 +100,11 @@ public final class AnnotatedFinder {
                     methods.add(new SourceMethod(thread, method));
                     tagLength--;
                 } while (tagLength > 0);
-            } else if (method.isAnnotationPresent(Produce.class)) {
-                Class<?>[] parameterTypes = method.getParameterTypes();
-                if (parameterTypes.length != 0) {
-                    throw new IllegalArgumentException("Method " + method + "has @Produce annotation but requires "
-                            + parameterTypes.length + " arguments.  Methods must require zero arguments.");
-                }
-                if (method.getReturnType() == Void.class) {
-                    throw new IllegalArgumentException("Method " + method
-                            + " has a return type of void.  Must declare a non-void type.");
-                }
-
-                Class<?> parameterClazz = method.getReturnType();
-                if (parameterClazz.isInterface()) {
-                    throw new IllegalArgumentException("Method " + method + " has @Produce annotation on " + parameterClazz
-                            + " which is an interface.  Producers must return a concrete class type.");
-                }
-                if (parameterClazz.equals(Void.TYPE)) {
-                    throw new IllegalArgumentException("Method " + method + " has @Produce annotation but has no return type.");
-                }
-
-                if ((method.getModifiers() & Modifier.PUBLIC) == 0) {
-                    throw new IllegalArgumentException("Method " + method + " has @Produce annotation on " + parameterClazz
-                            + " but is not 'public'.");
-                }
-
-                Produce annotation = method.getAnnotation(Produce.class);
-                EventThread thread = annotation.thread();
-                Tag[] tags = annotation.tags();
-                int tagLength = (tags == null ? 0 : tags.length);
-                do {
-                    String tag = Tag.DEFAULT;
-                    if (tagLength > 0) {
-                        tag = tags[tagLength - 1].value();
-                    }
-                    EventType type = new EventType(tag, parameterClazz);
-                    if (producerMethods.containsKey(type)) {
-                        throw new IllegalArgumentException("Producer for type " + type + " has already been registered.");
-                    }
-                    producerMethods.put(type, new SourceMethod(thread, method));
-                    tagLength--;
-                } while (tagLength > 0);
             }
         }
 
         PRODUCERS_CACHE.put(listenerClass, producerMethods);
         SUBSCRIBERS_CACHE.put(listenerClass, subscriberMethods);
-    }
-
-    /**
-     * This implementation finds all methods marked with a {@link Produce} annotation.
-     */
-    static Map<EventType, ProducerEvent> findAllProducers(Object listener) {
-        final Class<?> listenerClass = listener.getClass();
-        Map<EventType, ProducerEvent> producersInMethod = new HashMap<>();
-
-        Map<EventType, SourceMethod> methods = PRODUCERS_CACHE.get(listenerClass);
-        if (null == methods) {
-            methods = new HashMap<>();
-            loadAnnotatedProducerMethods(listenerClass, methods);
-        }
-        if (!methods.isEmpty()) {
-            for (Map.Entry<EventType, SourceMethod> e : methods.entrySet()) {
-                ProducerEvent producer = new ProducerEvent(listener, e.getValue().method, e.getValue().thread);
-                producersInMethod.put(e.getKey(), producer);
-            }
-        }
-
-        return producersInMethod;
     }
 
     /**
