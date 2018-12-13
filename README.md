@@ -16,6 +16,12 @@
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    
+#使用
+
+    dependencies {
+        implementation 'com.github.raoqingmou:MyRxBus:-SNAPSHOT'
+    }
 
 #使用注解
 
