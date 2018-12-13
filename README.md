@@ -93,7 +93,7 @@
 限制：那个观察者的观察类型，不能是接口。我想过办法了，改不了。
 原因：观察者存储在一个HashMap里面作为Key的是EventType，里面放的是String tag和Class<?> clzss；
 HashMap的get(key)的底层用的是getHashCode()作为对比。。。
-若不是interface: clzss.getHashCode()和继承自他的子类的getHashCode()是相同的；若是interface：则不同
+若不是interface: clzss.getHashCode()和继承自他的子类的getHashCode()是相同的；若是interface：则不同。
 所以！如果类型参数超过一个，或者是interface类型。。。我就抛异常
 
 
