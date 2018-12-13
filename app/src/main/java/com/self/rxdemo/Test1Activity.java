@@ -62,7 +62,7 @@ public class Test1Activity extends AppCompatActivity implements View.OnClickList
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_click1:
-                startActivity(new Intent(this, Test2Activity.class));
+                startActivity(new Intent(this, Test1Activity.class));
                 break;
             case R.id.btn_click2:
 

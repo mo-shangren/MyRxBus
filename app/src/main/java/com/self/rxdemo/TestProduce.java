@@ -1,6 +1,7 @@
 package com.self.rxdemo;
 
 import com.killr.rxbus.annotation.Produce;
+import com.killr.rxbus.annotation.Subscribe;
 import com.killr.rxbus.annotation.Tag;
 
 public class TestProduce {
@@ -17,6 +18,12 @@ public class TestProduce {
         //RxBus.get().register(mProduce); ==> RxBus.get().post("Produce","注册立即发送该消息");
         //把它删了岂不是美滋滋。。。
         return "注册立即发送该消息";
+    }
+
+    @Subscribe()
+    public void test() {
+        // 这里这个类也可以写观察者就是了。。。注册了，注意注销就是了
+
     }
 
 }
