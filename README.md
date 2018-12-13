@@ -18,10 +18,19 @@
     }
     
 #使用
+Add it in your root build.gradle at the end of repositories:
 
-    dependencies {
-	    implementation 'com.github.raoqingmou:MyRxBus:1.0.1'
-    }
+	allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
+	}
+Step 2. Add the dependency
+
+	dependencies {
+	        implementation 'com.github.raoqingmou:MyRxBus:1.0.1'
+	}
 
 #使用注解
 
