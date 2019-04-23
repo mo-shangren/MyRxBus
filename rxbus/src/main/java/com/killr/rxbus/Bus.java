@@ -167,7 +167,7 @@ public class Bus {
      */
     public void register(Object object) {
         if (object == null) {
-            throw new NullPointerException("Object to register must not be null.");
+            return;
         }
         enforcer.enforce(this);
 
@@ -184,7 +184,7 @@ public class Bus {
             }
             final Set<SubscriberEvent> foundSubscribers = foundSubscribersMap.get(type);
             if (!subscribers.addAll(foundSubscribers)) {
-                throw new IllegalArgumentException("Object already registered.");
+                return;
             }
         }
 
@@ -232,7 +232,7 @@ public class Bus {
      */
     public void unregister(Object object) {
         if (object == null) {
-            throw new NullPointerException("Object to unregister must not be null.");
+            return;
         }
         enforcer.enforce(this);
 
@@ -243,9 +243,7 @@ public class Bus {
             Collection<SubscriberEvent> eventMethodsInListener = entry.getValue();
 
             if (currentSubscribers == null || !currentSubscribers.containsAll(eventMethodsInListener)) {
-                throw new IllegalArgumentException(
-                        "Missing event subscriber for an annotated method. Is " + object.getClass()
-                                + " registered?");
+                return;
             }
 
             for (SubscriberEvent subscriber : currentSubscribers) {
